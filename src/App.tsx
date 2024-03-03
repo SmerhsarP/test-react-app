@@ -18,29 +18,33 @@ const getPeopleData = () => {
     .then(response => response.json());
 }
 
-const deleteRow = () => {
-  return '';
-}
+const App = () => {
+  const [tableData, setTableData] = useState<Array<Person>>([]);
+  const [isLoading, setLoader] = useState<Boolean>(false);
 
-const tableRendering = (data: Array<Person>) => {
-  if (data.length === 0) {
-    return (<tr><td colSpan={5}>Загрузите данные</td></tr>)
+  const tableRendering = (data: Array<Person>) => {
+    if (data.length === 0) {
+      if ((JSON.parse(localStorage.getItem('table') || '[]')).length > 0) {
+        setTableData(JSON.parse(localStorage.getItem('table') || '[]') as Array<Person>);
+      }
+      return (<tr><td colSpan={5}>Загрузите данные</td></tr>)
+    }
+
+    return data.map((row, index) => (
+      <tr key={index}>
+        <td>{row.name}</td>
+        <td>{row.gender}</td>
+        <td>{row.hair_color}</td>
+        <td>{row.height}</td>
+        <td>{row.eye_color}</td>
+        <td className="delete-icon" onClick={() => deleteRow(index)}>+</td>
+      </tr>
+    ));
   }
 
-  return data.map(row => (
-    <tr>
-      <td>{row.name}</td>
-      <td>{row.gender}</td>
-      <td>{row.hair_color}</td>
-      <td>{row.height}</td>
-      <td>{row.eye_color}</td>
-      <td className="delete-icon" onClick={deleteRow}>+</td>
-    </tr>
-  ));
-}
-
-const App = () => {
-  const [tableData, setTableData] = useState([]);
+  const loaderRender = () => {
+    return (<tr><td className='loader' colSpan={5}>#</td></tr>)
+  }
 
   const sortTableBy = (columnName: ObjectKey) => {
     const compare = (a: Person, b: Person) => {
@@ -53,17 +57,36 @@ const App = () => {
       return 0;
     }
 
-    console.log(columnName, tableData.sort(compare).map(item => item[columnName]));
+    // Пришлось делать костыль со slice для того, чтобы обновлялась верстка. Если закидывать тупо tableData, то он ничего не меняет.
+    setTableData(tableData.sort(compare).slice(0));
+  }
 
-    setTableData(tableData.sort(compare));
-    debugger;
+  const deleteRow = (index: any) => {
+    const isDelete = window.confirm(`Удалить ${tableData[index].name}?`);
+
+    if (isDelete) {
+      tableData.splice(index, 1);
+      // Пришлось делать костыль со splice для того, чтобы обновлялась верстка. Если закидывать тупо tableData, то он ничего не меняет.
+      setTableData(tableData.slice(0));
+      localStorage.setItem('table', JSON.stringify(tableData));
+    }
   }
 
   return (
     <div className="App">
       <div className="buttons-container">
-        <button onClick={(event) => getPeopleData().then(data => setTableData(data.results))}>Сделать запрос</button>
-        <button onClick={(event) => setTableData([])}>Очистить таблицу</button>
+        <button onClick={(event) => {
+          getPeopleData().then(data => {
+            setLoader(false);
+            setTableData(data.results);
+            localStorage.setItem('table', JSON.stringify(data.results));
+          });
+          setLoader(true);
+        }}>Сделать запрос</button>
+        <button onClick={(event) => {
+          setTableData([]);
+          localStorage.setItem('table', JSON.stringify([]));
+        }}>Очистить таблицу</button>
       </div>
 
       <table className="people-table">
@@ -78,10 +101,10 @@ const App = () => {
           </tr>
         </thead>
         <tbody>
-          {tableRendering(tableData)}
+          {isLoading ? loaderRender() : tableRendering(tableData)}
         </tbody>
       </table>
-    </div>
+    </div >
   );
 }
 
