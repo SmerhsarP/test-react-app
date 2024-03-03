@@ -16,6 +16,12 @@
   border-bottom: 1px solid black;
 }
 
+.delete-icon {
+  font-size: 24px;
+  transform: rotate(45deg);
+  cursor: pointer;
+}
+
 .App-logo {
   height: 40vmin;
   pointer-events: none;
