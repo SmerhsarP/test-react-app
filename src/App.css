@@ -2,6 +2,20 @@
   text-align: center;
 }
 
+.buttons-container {
+  display: flex;
+  justify-content: space-between;
+  margin: 20px;
+}
+
+.people-table {
+  width: 100%;
+}
+
+.people-table thead th {
+  border-bottom: 1px solid black;
+}
+
 .App-logo {
   height: 40vmin;
   pointer-events: none;
